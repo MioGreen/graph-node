@@ -1,9 +1,11 @@
 //! See `subgraphs.graphql` in the store for corresponding graphql schema.
 
 use super::SubgraphId;
-use components::store::{EntityKey, EntityOperation};
+use components::store::{AttributeIndexOperation, EntityKey, EntityOperation};
+use data::graphql::validation::get_valid_value_type;
 use data::store::{Entity, Value};
 use data::subgraph::SubgraphStatus;
+use graphql_parser::schema::{Definition, Document, TypeDefinition};
 use std::collections::HashMap;
 
 /// ID of the subgraph of subgraphs.
@@ -361,4 +363,36 @@ fn set_entity_operation(
         },
         data: data.into(),
     }
+}
+
+pub fn attribute_indexing_operations(
+    subgraph_id: SubgraphId,
+    document: Document,
+) -> Vec<AttributeIndexOperation> {
+    let mut indexing_ops = vec![];
+    for (entity_number, schema_type) in document.definitions.clone().into_iter().enumerate() {
+        if let Definition::TypeDefinition(definition) = schema_type {
+            if let TypeDefinition::Object(schema_object) = definition {
+                for (attribute_number, entity_field) in schema_object.fields.into_iter().enumerate()
+                {
+                    indexing_ops.push(AttributeIndexOperation {
+                        subgraph_id: subgraph_id.clone(),
+                        index_name: format!(
+                            "{}_{}_{}_idx",
+                            subgraph_id.clone(),
+                            entity_number,
+                            attribute_number,
+                        ),
+                        field_value_type: match get_valid_value_type(&entity_field.field_type) {
+                            Ok(value_type) => value_type,
+                            Err(_) => continue,
+                        },
+                        attribute_name: entity_field.name,
+                        entity_name: schema_object.name.clone(),
+                    });
+                }
+            }
+        }
+    }
+    indexing_ops
 }

@@ -248,12 +248,11 @@ impl fmt::Display for EventSource {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct AttributeIndexOperation {
     pub subgraph_id: SubgraphId,
     pub index_name: String,
-    pub index_type: String,
-    pub index_operator: String,
+    pub field_value_type: ValueType,
     pub attribute_name: String,
     pub entity_name: String,
 }
