@@ -468,14 +468,15 @@ impl Store {
         conn: &PgConnection,
         index: AttributeIndexDefinition,
     ) -> Result<(), Error> {
-        let (index_type, index_operator) = match operation.field_value_type {
+        let (index_type, index_operator, jsonb_index) = match index.field_value_type {
             ValueType::Boolean
             | ValueType::BigInt
             | ValueType::Bytes
             | ValueType::Float
             | ValueType::ID
-            | ValueType::Int => (String::from("btree"), String::from("")),
-            ValueType::String => (String::from("gin"), String::from("gin_trgm_ops")),
+            | ValueType::Int => (String::from("btree"), String::from(""), false),
+            ValueType::String => (String::from("gin"), String::from("gin_trgm_ops"), false),
+            ValueType::List => (String::from("gin"), String::from("jsonb_path_ops"), true),
         };
 
         select(build_attribute_index(
@@ -625,6 +626,12 @@ impl StoreTrait for Store {
                 ValueType::ID => "",
                 ValueType::Int => "::bigint",
                 ValueType::String => "",
+                ValueType::List => {
+                    return Err(QueryExecutionError::OrderByNotSupportedError(
+                        "List".to_string(),
+                        "All".to_string(),
+                    ));
+                }
             };
             diesel_query = diesel_query.order(
                 sql::<Text>("(data ->")
