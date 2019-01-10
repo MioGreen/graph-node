@@ -125,7 +125,10 @@ impl Store for MockStore {
         Ok(())
     }
 
-    fn build_entity_attribute_indexes(&self, _: Vec<AttributeIndexOperation>) -> Result<(), Error> {
+    fn build_entity_attribute_indexes(
+        &self,
+        _: Vec<AttributeIndexDefinition>,
+    ) -> Result<(), Error> {
         Ok(())
     }
 
@@ -362,7 +365,10 @@ impl Store for FakeStore {
         Ok(())
     }
 
-    fn build_entity_attribute_indexes(&self, _: Vec<AttributeIndexOperation>) -> Result<(), Error> {
+    fn build_entity_attribute_indexes(
+        &self,
+        _: Vec<AttributeIndexDefinition>,
+    ) -> Result<(), Error> {
         Ok(())
     }
 
